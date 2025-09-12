@@ -2,7 +2,7 @@ CXX=g++
 SRC_DIR=src
 INC_DIR=include
 BLD_DIR=build
-CXXFLAGS=-Wall -Werror -I$(INC_DIR) -g
+CXXFLAGS=-Wall -Werror -I$(INC_DIR) -Iaux/logger -g -DDEBUG_A
 
 all:editor_main
 

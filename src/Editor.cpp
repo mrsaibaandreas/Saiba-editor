@@ -1,21 +1,25 @@
 #include <iostream>
+#include <stdlib.h>
 #include <unistd.h>
 #include "Editor.hpp"
+#include "Logger.hpp"
+
+struct termios Editor::origTermios;
 
 Editor::Editor() {
     if (!init()) {
-        std::cout << "Init was not succesful, aborting...\n";
+        LOG_D("Init was not succesful, aborting...\n");
         std::exit(0);
     }
-    std::cout << "Init was succesful\n";
+    LOG_D("Init was succesful\n");
 }
 
 Editor::~Editor() {
     if (!uninit()) {
-        std::cout << "Uninit not succesful, maybe some corruption, maybe some files were not properly closed\n";
+        LOG_D("Uninit not succesful, maybe some corruption, maybe some files were not properly closed\n");
         std::exit(0);
     }
-    std::cout << "Uninit was succesful\n";
+    LOG_D("Uninit was succesful\n");
 }
 
 bool Editor::init() {
@@ -28,17 +32,42 @@ bool Editor::uninit() {
     return true;
 }
 
+void Editor::enableRawMode() {
+    tcgetattr(STDIN_FILENO, &origTermios);
+    atexit(disableRawMode);
+    struct termios raw = origTermios;
+    raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+    raw.c_oflag &= ~(OPOST);
+    raw.c_cflag |= (CS8);
+    raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+    raw.c_cc[VMIN] = 0;
+    raw.c_cc[VTIME] = 1;
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
 
+void Editor::disableRawMode() {
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &origTermios) == -1) {
+        LOG_I(LogLevel::ERROR, "tcsetattr");
+        exit(-1);
+    }
+}
 
 void Editor::editorProcessKey() {
  //   readKeyboardInput();
 }
 void Editor::startMainLoop() {
+    enableRawMode();
+    char c = '\0';
     while (1) {
   //      editorRefreshScreen();
     //    editorProcessKey();
-          sleep(1);
-          write(1, "Test\n", 5);
-    }    
-
+        if (read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN) std::abort();
+        if (iscntrl(c)){
+            LOG_D("%d\r\n", c);
+        } else {
+            LOG_D("%d ('%c')\r\n", c, c); 
+        }
+        if (c == 'q') break;
+    }
+    disableRawMode();
 }
