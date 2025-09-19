@@ -3,6 +3,7 @@ project(Editor)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+add_compile_options(-Wall -Wextra -Werror -std=c++20 -DDEBUG_A)
 
 # Add object files:
 file(GLOB_RECURSE EditorSources src/*.cpp)

@@ -4,7 +4,11 @@
 #include "Editor.hpp"
 #include "Logger.hpp"
 
-struct termios Editor::origTermios;
+// Define's space
+#define TRANSFORM_CTRL(k) ((k) & 0x1f)
+// End of define's space
+
+Screen Editor::screen;
 
 Editor::Editor() {
     if (!init()) {
@@ -33,41 +37,46 @@ bool Editor::uninit() {
 }
 
 void Editor::enableRawMode() {
-    tcgetattr(STDIN_FILENO, &origTermios);
+
     atexit(disableRawMode);
-    struct termios raw = origTermios;
-    raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    raw.c_oflag &= ~(OPOST);
-    raw.c_cflag |= (CS8);
-    raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-    raw.c_cc[VMIN] = 0;
-    raw.c_cc[VTIME] = 1;
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+    screen.enableRawMode();
 }
 
 void Editor::disableRawMode() {
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &origTermios) == -1) {
-        LOG_I(LogLevel::ERROR, "tcsetattr");
-        exit(-1);
-    }
+    screen.disableRawMode();
 }
 
+void Editor::drawRows() {
+    for (int raw = 0; raw < 24; raw++)
+        writeToScreen("#\r\n");
+}
+void Editor::writeToScreen(const std::string& sequence) {
+    screen.draw(sequence);
+}
+void Editor::editorRefreshScreen() {
+    screen.refreshScreen();
+    drawRows();
+    writeToScreen("\x1b[H");
+}
 void Editor::editorProcessKey() {
- //   readKeyboardInput();
+    char userInput = screen.readKeyboardInput();
+    
+    switch (userInput) {
+        case TRANSFORM_CTRL('q'):
+            LOG_D("Gracefully exiting the program, user request");
+            editorRefreshScreen();
+            std::exit(0);
+            break;
+        default:
+            LOG_D("Key %c pressed\r", userInput);
+
+    }
 }
 void Editor::startMainLoop() {
     enableRawMode();
-    char c = '\0';
     while (1) {
-  //      editorRefreshScreen();
-    //    editorProcessKey();
-        if (read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN) std::abort();
-        if (iscntrl(c)){
-            LOG_D("%d\r\n", c);
-        } else {
-            LOG_D("%d ('%c')\r\n", c, c); 
-        }
-        if (c == 'q') break;
+        editorRefreshScreen();
+        editorProcessKey();
     }
-    disableRawMode();
+    disableRawMode();  
 }
