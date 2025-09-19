@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo -ne "Building Saiba Editor..."
+
+if [ ! -d build ]; then
+    ./configure
+fi
+
+pushd build
+
+ninja
+ninja install
+
+popd
+
