@@ -11,7 +11,7 @@ int main() {
     std::shared_ptr<Editor> editor = std::make_shared<Editor>();
     
     startLoop(editor);
-
+dasdsadhbas
     return 0;
 }
 
