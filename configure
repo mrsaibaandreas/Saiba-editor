@@ -1,0 +1,13 @@
+#!/bin/bash
+
+
+if [ ! -d build ]; then
+    mkdir -v build
+    pushd build
+    cmake .. -G Ninja
+    popd
+fi
+
+echo -ne "Configuration generated successfully"
+echo -ne "To build, cd build; ninja all"
+echo -ne "Or run editor_build script"
