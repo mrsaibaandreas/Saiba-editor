@@ -10,7 +10,7 @@ class Editor {
         ~Editor();
         void startMainLoop(void);
     private:
-        static Screen screen;
+        Screen screen;
         EditorStates editorState;              
         
         bool init();
@@ -21,6 +21,6 @@ class Editor {
         void drawRows();
         void writeToScreen(const std::string& sequence);        
         char readKeyboardInput(); 
-        static void enableRawMode();
-        static void disableRawMode();
+        void enableRawMode();
+        void disableRawMode();
 };
