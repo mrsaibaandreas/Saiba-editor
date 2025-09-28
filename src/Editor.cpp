@@ -15,7 +15,6 @@ Editor::Editor() {
         LOG_D("Init was not succesful, aborting...");
         std::exit(0);
     }
-    screen = Screen();
     LOG_D("Init was succesful");
 }
 
@@ -52,16 +51,17 @@ void Editor::disableRawMode() {
 void Editor::drawRows() {
     int row;
     int maxRows = screen.getRows();
+
     for (row = 0; row < maxRows; row++) {
         if (row == maxRows / 3) {
-            std::string  welcomeMessage = "MrSaiba learning text editor -- version 0.0.0"; 
+            std::string  welcomeMessage = "MrSaiba learning text editor -- version 1.0.0"; 
             std::uint32_t screenCollums = screen.getCols();
             if (welcomeMessage.size() > screenCollums) {
                 welcomeMessage.resize(screenCollums);
             } 
             writeToScreen(welcomeMessage);
         } else {
-            writeToScreen("#\r\n");
+            writeToScreen("~");    
         }
         writeToScreen("\x1b[K");
         if (row < maxRows - 1) { 
@@ -91,6 +91,7 @@ void Editor::editorProcessKey() {
             LOG_D("Gracefully exiting the program, user request");
             editorRefreshScreen();
             disableRawMode();
+            write(STDOUT_FILENO, "\x1[H", 3);
             std::exit(0);
             break;
         default:
