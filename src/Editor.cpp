@@ -61,11 +61,11 @@ void Editor::drawRows() {
             } 
             writeToScreen(welcomeMessage);
         } else {
-            writeToScreen("~");    
+            writeToScreen("#");    
         }
         writeToScreen("\x1b[K");
         if (row < maxRows - 1) { 
-            writeToScreen("#\r\n");
+            writeToScreen("\r\n");
         }
     }
 }
