@@ -1,28 +1,34 @@
 #include <iostream>
+#include <cstdint>
 #include <stdlib.h>
 #include <unistd.h>
 #include "Editor.hpp"
 #include "Logger.hpp"
 
-struct termios Editor::origTermios;
+// Define's space
+#define TRANSFORM_CTRL(k) ((k) & 0x1f)
+// End of define's space
+
 
 Editor::Editor() {
     if (!init()) {
-        LOG_D("Init was not succesful, aborting...\n");
+        LOG_D("Init was not succesful, aborting...");
         std::exit(0);
     }
-    LOG_D("Init was succesful\n");
+    LOG_D("Init was succesful");
 }
 
 Editor::~Editor() {
     if (!uninit()) {
-        LOG_D("Uninit not succesful, maybe some corruption, maybe some files were not properly closed\n");
+        LOG_D("Uninit not succesful, maybe some corruption, maybe some files were not properly closed");
         std::exit(0);
     }
-    LOG_D("Uninit was succesful\n");
+    LOG_D("Uninit was succesful");
 }
 
 bool Editor::init() {
+    if (!screen.getWindowSize())
+        return false;
     //updateWindowSize();
     //signal(SIGWINCH, handleSigWinCh);
     return true;
@@ -33,41 +39,72 @@ bool Editor::uninit() {
 }
 
 void Editor::enableRawMode() {
-    tcgetattr(STDIN_FILENO, &origTermios);
-    atexit(disableRawMode);
-    struct termios raw = origTermios;
-    raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    raw.c_oflag &= ~(OPOST);
-    raw.c_cflag |= (CS8);
-    raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-    raw.c_cc[VMIN] = 0;
-    raw.c_cc[VTIME] = 1;
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+
+    //atexit(disableRawMode);
+    screen.enableRawMode();
 }
 
 void Editor::disableRawMode() {
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &origTermios) == -1) {
-        LOG_I(LogLevel::ERROR, "tcsetattr");
-        exit(-1);
+    screen.disableRawMode();
+}
+
+void Editor::drawRows() {
+    int row;
+    int maxRows = screen.getRows();
+
+    for (row = 0; row < maxRows; row++) {
+        if (row == maxRows / 3) {
+            std::string  welcomeMessage = "MrSaiba learning text editor -- version 1.0.0"; 
+            std::uint32_t screenCollums = screen.getCols();
+            if (welcomeMessage.size() > screenCollums) {
+                welcomeMessage.resize(screenCollums);
+            } 
+            writeToScreen(welcomeMessage);
+        } else {
+            writeToScreen("~");    
+        }
+        writeToScreen("\x1b[K");
+        if (row < maxRows - 1) { 
+            writeToScreen("#\r\n");
+        }
     }
 }
 
+void Editor::writeToScreen(const std::string& sequence) {
+    screen.draw(sequence);
+}
+
+void Editor::editorRefreshScreen() {
+    writeToScreen("\x1b[?25l");
+    screen.refreshScreen();
+    drawRows();
+    writeToScreen("\x1b[H");
+    writeToScreen("\x1b[?25h");
+    screen.flush();
+}
+
 void Editor::editorProcessKey() {
- //   readKeyboardInput();
+    char userInput = screen.readKeyboardInput();
+    
+    switch (userInput) {
+        case TRANSFORM_CTRL('q'):
+            LOG_D("Gracefully exiting the program, user request");
+            editorRefreshScreen();
+            disableRawMode();
+            // investigate why this does not work on exiting the program
+            //write(STDOUT_FILENO, "\x1b[H", 3);
+            std::exit(0);
+            break;
+        default:
+            LOG_D("Key %c pressed\r", userInput);
+
+    }
 }
 void Editor::startMainLoop() {
     enableRawMode();
-    char c = '\0';
     while (1) {
-  //      editorRefreshScreen();
-    //    editorProcessKey();
-        if (read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN) std::abort();
-        if (iscntrl(c)){
-            LOG_D("%d\r\n", c);
-        } else {
-            LOG_D("%d ('%c')\r\n", c, c); 
-        }
-        if (c == 'q') break;
+        editorRefreshScreen();
+        editorProcessKey();
     }
     disableRawMode();
 }

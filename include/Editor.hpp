@@ -1,6 +1,9 @@
 #pragma once
 #include "Screen.hpp"
-#include <termios.h>
+enum class EditorStates {
+    RAW_DISABLED = 0,
+    RAW_ENABLED = 1
+};
 class Editor {
     public:
         Editor();
@@ -8,11 +11,16 @@ class Editor {
         void startMainLoop(void);
     private:
         Screen screen;
-        static struct termios origTermios;
+        EditorStates editorState;              
         
         bool init();
         bool uninit();
+        
         void editorProcessKey();
-        static void enableRawMode();
-        static void disableRawMode();
+        void editorRefreshScreen();
+        void drawRows();
+        void writeToScreen(const std::string& sequence);        
+        char readKeyboardInput(); 
+        void enableRawMode();
+        void disableRawMode();
 };

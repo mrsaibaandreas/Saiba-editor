@@ -6,6 +6,10 @@ if [ ! -d build ]; then
     ./configure
 fi
 
+if [ "$1" == "run" ]; then
+    ./bin/Editor
+    exit 0
+fi
 pushd build
 
 ninja
