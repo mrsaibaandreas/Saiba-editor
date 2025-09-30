@@ -2,12 +2,15 @@
 #include <cstdint>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sstream>
 #include "Editor.hpp"
 #include "Logger.hpp"
+#include "Misc.hpp"
 
 // Define's space
 #define TRANSFORM_CTRL(k) ((k) & 0x1f)
 // End of define's space
+
 
 
 Editor::Editor() {
@@ -59,6 +62,14 @@ void Editor::drawRows() {
             if (welcomeMessage.size() > screenCollums) {
                 welcomeMessage.resize(screenCollums);
             } 
+            std::int32_t padding = (screenCollums - welcomeMessage.size()) / 2;
+            if (padding) {
+                writeToScreen("#");
+                padding--;
+            }
+            while (padding--) {
+                writeToScreen(" ");
+            }
             writeToScreen(welcomeMessage);
         } else {
             writeToScreen("#");    
@@ -77,27 +88,59 @@ void Editor::writeToScreen(const std::string& sequence) {
 void Editor::editorRefreshScreen() {
     writeToScreen("\x1b[?25l");
     screen.refreshScreen();
+
     drawRows();
-    writeToScreen("\x1b[H");
+
+    std::stringstream cursorPosition;
+    cursorPosition<< "\x1b[" << screen.getCy() + 1 << ";" <<  screen.getCx() + 1 << "H";
+    writeToScreen(cursorPosition.str());
+
     writeToScreen("\x1b[?25h");
+
     screen.flush();
 }
 
 void Editor::editorProcessKey() {
-    char userInput = screen.readKeyboardInput();
+    int userInput = screen.readKeyboardInput();
     
     switch (userInput) {
         case TRANSFORM_CTRL('q'):
             LOG_D("Gracefully exiting the program, user request");
             editorRefreshScreen();
             disableRawMode();
-            // investigate why this does not work on exiting the program
-            //write(STDOUT_FILENO, "\x1b[H", 3);
+            // in the future find a greater approach than just hardcoding here
+            writeToScreen("\x1b[H\x1b[2J");
+            screen.flush();
             std::exit(0);
+            break;
+        case ARROW_UP:
+        case ARROW_DOWN:
+        case ARROW_LEFT:
+        case ARROW_RIGHT:
+            editorMoveCursor(userInput);
             break;
         default:
             LOG_D("Key %c pressed\r", userInput);
 
+    }
+}
+
+void Editor::editorMoveCursor(int key) {
+    std::uint32_t cx = screen.getCx();
+    std::uint32_t cy = screen.getCy();
+    switch (key) {
+        case 'w':
+            screen.setCy(--cy);
+            break;
+        case 'a':
+            screen.setCx(--cx);
+            break;
+        case 's':
+            screen.setCy(++cy);
+            break;
+        case 'd':
+            screen.setCx(++cx);
+            break;
     }
 }
 void Editor::startMainLoop() {
@@ -108,3 +151,4 @@ void Editor::startMainLoop() {
     }
     disableRawMode();
 }
+

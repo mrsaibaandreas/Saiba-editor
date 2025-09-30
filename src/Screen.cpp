@@ -1,8 +1,9 @@
 #include "Screen.hpp"
 #include "Logger.hpp"
-
+#include "Misc.hpp"
 #include <sys/ioctl.h>
 #include <unistd.h>
+
 
 /* Note
  * For operations which don't require an result, std::cout is used
@@ -17,8 +18,8 @@ Screen::Screen() {
 }
 
 void Screen::init() {
-    cx = 0;
-    cy = 0;
+    cx = 15;
+    cy = 15;
     rowoff = 0;
     coloff = 0;
     numrows = 0;
@@ -59,7 +60,8 @@ void Screen::disableRawMode() {
 }
 
 void Screen::refreshScreen() {
-   writeBuffer += "\x1b[H";
+   writeBuffer += "\x1b]H";
+
 }
 
 void Screen::uninit() {}
@@ -97,13 +99,31 @@ bool Screen::getCursorPosition() {
     return true;
 }
 
-char Screen::readKeyboardInput() {
+int Screen::readKeyboardInput() {
     std::int32_t charactersRead;
     char character;
     while ((charactersRead = read(STDIN_FILENO, &character, 1)) != 1) {
         if (charactersRead == - 1 && errno != EAGAIN) std::abort();
     }
-    return character;
+    // map arrow keys
+    if (charactersRead == '\x1b') {
+        char sequence[3];
+
+        if (read(STDIN_FILENO, &sequence[0], 1) != 1) return '\x1b';
+        if (read(STDIN_FILENO, &sequence[1], 1) != 1) return '\x1b';
+
+        if (sequence[0] == '[') {
+            switch (sequence[1]) {
+                case 'A': return ARROW_UP;
+                case 'B': return ARROW_DOWN;
+                case 'C': return ARROW_RIGHT;
+                case 'D': return ARROW_LEFT;
+            }
+        }
+        return '\x1b';
+    } else {
+        return character;
+    }
 }
 
 std::uint32_t Screen::getRows() {
@@ -112,6 +132,21 @@ std::uint32_t Screen::getRows() {
 
 std::uint32_t Screen::getCols() {
     return screencols;
+}
+
+std::uint32_t Screen::getCx() {
+    return cx;
+}
+std::uint32_t Screen::getCy() {
+    return cy;
+}
+
+void Screen::setCx(std::uint32_t cx) {
+    this->cx = cx;
+}
+
+void Screen::setCy(std::uint32_t cy) {
+    this->cy = cy;
 }
 
 void Screen::flush() {
