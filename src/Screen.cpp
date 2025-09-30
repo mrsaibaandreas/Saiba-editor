@@ -27,8 +27,11 @@ void Screen::init() {
 }
 // abort process
 void Screen::abortP(const std::string& message) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
     write(STDOUT_FILENO, "\x1b[2J", 4);
     write(STDOUT_FILENO, "\x1b[H", 3);
+#pragma GCC diagnostic pop
     LOG_I(LogLevel::ERROR, message.c_str());
     std::abort();
 }
@@ -112,7 +115,11 @@ std::uint32_t Screen::getCols() {
 }
 
 void Screen::flush() {
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
     write(STDOUT_FILENO, writeBuffer.c_str(), writeBuffer.size());
+#pragma GCC diagnostic pop
     writeBuffer.clear();
     writeBuffer = std::string();
 }
