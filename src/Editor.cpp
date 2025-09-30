@@ -91,7 +91,7 @@ void Editor::editorProcessKey() {
             LOG_D("Gracefully exiting the program, user request");
             editorRefreshScreen();
             disableRawMode();
-            write(STDOUT_FILENO, "\x1[H", 3);
+            write(STDOUT_FILENO, "\x1b[H", 3);
             std::exit(0);
             break;
         default:
