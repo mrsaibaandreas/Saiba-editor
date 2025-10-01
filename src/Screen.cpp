@@ -106,12 +106,13 @@ int Screen::readKeyboardInput() {
         if (charactersRead == - 1 && errno != EAGAIN) std::abort();
     }
     // map arrow keys
-    if (charactersRead == '\x1b') {
+    if (character == '\x1b') {
         char sequence[3];
-
+        LOG_D("Before the ifs");
         if (read(STDIN_FILENO, &sequence[0], 1) != 1) return '\x1b';
+        LOG_D("Between");
         if (read(STDIN_FILENO, &sequence[1], 1) != 1) return '\x1b';
-
+        LOG_D("After");
         if (sequence[0] == '[') {
             switch (sequence[1]) {
                 case 'A': return ARROW_UP;
@@ -127,17 +128,21 @@ int Screen::readKeyboardInput() {
 }
 
 std::uint32_t Screen::getRows() {
+    LOG_D("Row value %d", screenrows);
     return screenrows;
 }
 
 std::uint32_t Screen::getCols() {
+    LOG_D("Collumn value %d", screencols);
     return screencols;
 }
 
 std::uint32_t Screen::getCx() {
+    LOG_D("Cx value %d", cx);
     return cx;
 }
 std::uint32_t Screen::getCy() {
+    LOG_D("Cy value %d", cy);
     return cy;
 }
 

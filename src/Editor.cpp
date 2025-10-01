@@ -102,10 +102,10 @@ void Editor::editorRefreshScreen() {
 
 void Editor::editorProcessKey() {
     int userInput = screen.readKeyboardInput();
-    
+    LOG_D("User input is %d", userInput);
     switch (userInput) {
         case TRANSFORM_CTRL('q'):
-            LOG_D("Gracefully exiting the program, user request");
+            LOG_I(LogLevel::INFO, "Gracefully exiting the program, user request");
             editorRefreshScreen();
             disableRawMode();
             // in the future find a greater approach than just hardcoding here
@@ -117,6 +117,7 @@ void Editor::editorProcessKey() {
         case ARROW_DOWN:
         case ARROW_LEFT:
         case ARROW_RIGHT:
+            LOG_D("Calling editorMoveCursor with %d", userInput);
             editorMoveCursor(userInput);
             break;
         default:
@@ -129,16 +130,16 @@ void Editor::editorMoveCursor(int key) {
     std::uint32_t cx = screen.getCx();
     std::uint32_t cy = screen.getCy();
     switch (key) {
-        case 'w':
+        case ARROW_UP:
             screen.setCy(--cy);
             break;
-        case 'a':
-            screen.setCx(--cx);
-            break;
-        case 's':
+        case ARROW_DOWN:
             screen.setCy(++cy);
             break;
-        case 'd':
+        case ARROW_LEFT:
+            screen.setCx(--cx);
+            break;
+        case ARROW_RIGHT:
             screen.setCx(++cx);
             break;
     }
