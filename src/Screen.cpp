@@ -108,17 +108,37 @@ int Screen::readKeyboardInput() {
     // map arrow keys
     if (character == '\x1b') {
         char sequence[3];
-        LOG_D("Before the ifs");
         if (read(STDIN_FILENO, &sequence[0], 1) != 1) return '\x1b';
-        LOG_D("Between");
         if (read(STDIN_FILENO, &sequence[1], 1) != 1) return '\x1b';
-        LOG_D("After");
         if (sequence[0] == '[') {
+            if (sequence[1] >= '0' && sequence[1] <= '9') {
+                if (read(STDIN_FILENO, &sequence[2], 1) != 1) return '\x1b';
+                if (sequence[2] == '~') {
+                    switch (sequence[1]) {
+                        case '1': return HOME;
+                        case '3': return DELETE;
+                        case '4': return END;
+                        case '5': return PAGE_UP;
+                        case '6': return PAGE_DOWN;
+                        case '7': return HOME;
+                        case '8': return END;
+                    }
+                }
+            } else {
+                switch (sequence[1]) {
+                    case 'A': return ARROW_UP;
+                    case 'B': return ARROW_DOWN;
+                    case 'C': return ARROW_RIGHT;
+                    case 'D': return ARROW_LEFT;
+                    case 'H': return HOME;
+                    case 'F': return END;
+
+                }
+            }
+        } else if (sequence[0] == 'O') {
             switch (sequence[1]) {
-                case 'A': return ARROW_UP;
-                case 'B': return ARROW_DOWN;
-                case 'C': return ARROW_RIGHT;
-                case 'D': return ARROW_LEFT;
+                case 'H': return HOME;
+                case 'F': return END;
             }
         }
         return '\x1b';
@@ -127,30 +147,45 @@ int Screen::readKeyboardInput() {
     }
 }
 
-std::uint32_t Screen::getRows() {
+std::int32_t Screen::getRows() {
     LOG_D("Row value %d", screenrows);
     return screenrows;
 }
 
-std::uint32_t Screen::getCols() {
+std::int32_t Screen::getCols() {
     LOG_D("Collumn value %d", screencols);
     return screencols;
 }
 
-std::uint32_t Screen::getCx() {
+std::int32_t Screen::getCx() {
     LOG_D("Cx value %d", cx);
     return cx;
 }
-std::uint32_t Screen::getCy() {
+std::int32_t Screen::getCy() {
     LOG_D("Cy value %d", cy);
     return cy;
 }
 
-void Screen::setCx(std::uint32_t cx) {
+void Screen::setCx(std::int32_t cx) {
+        if (cx == screencols) {
+        LOG_I(LogLevel::WARNING, "Screen overflow avoided, not setting the value");
+        return ;
+    } else if (cx < 0) {
+        LOG_I(LogLevel::WARNING, "Screen underflow avoided, not setting the value");
+        return ;
+    }
+
     this->cx = cx;
 }
 
-void Screen::setCy(std::uint32_t cy) {
+void Screen::setCy(std::int32_t cy) {
+    if (cy == screenrows) {
+        LOG_I(LogLevel::WARNING, "Screen overflow avoided, not setting the value");
+        return ;
+    } else if (cy < 0) {
+        LOG_I(LogLevel::WARNING, "Screen underflow avoided, not setting the value");
+        return ;
+    }
     this->cy = cy;
 }
 

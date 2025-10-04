@@ -58,11 +58,11 @@ void Editor::drawRows() {
     for (row = 0; row < maxRows; row++) {
         if (row == maxRows / 3) {
             std::string  welcomeMessage = "MrSaiba learning text editor -- version 1.0.0"; 
-            std::uint32_t screenCollums = screen.getCols();
-            if (welcomeMessage.size() > screenCollums) {
+            std::int32_t screenCollums = screen.getCols();
+            if (welcomeMessage.size() > (std::uint32_t)screenCollums) {
                 welcomeMessage.resize(screenCollums);
             } 
-            std::int32_t padding = (screenCollums - welcomeMessage.size()) / 2;
+            std::int32_t padding = ((std::uint32_t)screenCollums - welcomeMessage.size()) / 2;
             if (padding) {
                 writeToScreen("#");
                 padding--;
@@ -113,6 +113,21 @@ void Editor::editorProcessKey() {
             screen.flush();
             std::exit(0);
             break;
+        case HOME:
+            screen.setCx(0);
+            break;
+        case END:
+            screen.setCx(screen.getCols() - 1);
+            break;
+        case PAGE_UP:
+        case PAGE_DOWN: 
+            {
+                int length = screen.getRows();
+                while (length--) {
+                    editorMoveCursor(userInput == PAGE_UP ? ARROW_UP : ARROW_DOWN);
+                }
+            }
+            break;
         case ARROW_UP:
         case ARROW_DOWN:
         case ARROW_LEFT:
@@ -127,8 +142,8 @@ void Editor::editorProcessKey() {
 }
 
 void Editor::editorMoveCursor(int key) {
-    std::uint32_t cx = screen.getCx();
-    std::uint32_t cy = screen.getCy();
+    std::int32_t cx = screen.getCx();
+    std::int32_t cy = screen.getCy();
     switch (key) {
         case ARROW_UP:
             screen.setCy(--cy);
