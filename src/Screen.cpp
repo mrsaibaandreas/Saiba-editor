@@ -61,7 +61,6 @@ void Screen::disableRawMode() {
 
 void Screen::refreshScreen() {
    writeBuffer += "\x1b]H";
-
 }
 
 void Screen::uninit() {}
