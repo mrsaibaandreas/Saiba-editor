@@ -2,12 +2,15 @@
 #include <cstdint>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sstream>
 #include "Editor.hpp"
 #include "Logger.hpp"
+#include "Misc.hpp"
 
 // Define's space
 #define TRANSFORM_CTRL(k) ((k) & 0x1f)
 // End of define's space
+
 
 
 Editor::Editor() {
@@ -55,17 +58,25 @@ void Editor::drawRows() {
     for (row = 0; row < maxRows; row++) {
         if (row == maxRows / 3) {
             std::string  welcomeMessage = "MrSaiba learning text editor -- version 1.0.0"; 
-            std::uint32_t screenCollums = screen.getCols();
-            if (welcomeMessage.size() > screenCollums) {
+            std::int32_t screenCollums = screen.getCols();
+            if (welcomeMessage.size() > (std::uint32_t)screenCollums) {
                 welcomeMessage.resize(screenCollums);
             } 
+            std::int32_t padding = ((std::uint32_t)screenCollums - welcomeMessage.size()) / 2;
+            if (padding) {
+                writeToScreen("#");
+                padding--;
+            }
+            while (padding--) {
+                writeToScreen(" ");
+            }
             writeToScreen(welcomeMessage);
         } else {
-            writeToScreen("~");    
+            writeToScreen("#");    
         }
         writeToScreen("\x1b[K");
         if (row < maxRows - 1) { 
-            writeToScreen("#\r\n");
+            writeToScreen("\r\n");
         }
     }
 }
@@ -77,27 +88,75 @@ void Editor::writeToScreen(const std::string& sequence) {
 void Editor::editorRefreshScreen() {
     writeToScreen("\x1b[?25l");
     screen.refreshScreen();
+
     drawRows();
-    writeToScreen("\x1b[H");
+
+    std::stringstream cursorPosition;
+    cursorPosition<< "\x1b[" << screen.getCy() + 1 << ";" <<  screen.getCx() + 1 << "H";
+    writeToScreen(cursorPosition.str());
+
     writeToScreen("\x1b[?25h");
+
     screen.flush();
 }
 
 void Editor::editorProcessKey() {
-    char userInput = screen.readKeyboardInput();
-    
+    int userInput = screen.readKeyboardInput();
+    LOG_D("User input is %d", userInput);
     switch (userInput) {
         case TRANSFORM_CTRL('q'):
-            LOG_D("Gracefully exiting the program, user request");
+            LOG_I(LogLevel::INFO, "Gracefully exiting the program, user request");
             editorRefreshScreen();
             disableRawMode();
-            // investigate why this does not work on exiting the program
-            //write(STDOUT_FILENO, "\x1b[H", 3);
+            // in the future find a greater approach than just hardcoding here
+            writeToScreen("\x1b[H\x1b[2J");
+            screen.flush();
             std::exit(0);
+            break;
+        case HOME:
+            screen.setCx(0);
+            break;
+        case END:
+            screen.setCx(screen.getCols() - 1);
+            break;
+        case PAGE_UP:
+        case PAGE_DOWN: 
+            {
+                int length = screen.getRows();
+                while (length--) {
+                    editorMoveCursor(userInput == PAGE_UP ? ARROW_UP : ARROW_DOWN);
+                }
+            }
+            break;
+        case ARROW_UP:
+        case ARROW_DOWN:
+        case ARROW_LEFT:
+        case ARROW_RIGHT:
+            LOG_D("Calling editorMoveCursor with %d", userInput);
+            editorMoveCursor(userInput);
             break;
         default:
             LOG_D("Key %c pressed\r", userInput);
 
+    }
+}
+
+void Editor::editorMoveCursor(int key) {
+    std::int32_t cx = screen.getCx();
+    std::int32_t cy = screen.getCy();
+    switch (key) {
+        case ARROW_UP:
+            screen.setCy(--cy);
+            break;
+        case ARROW_DOWN:
+            screen.setCy(++cy);
+            break;
+        case ARROW_LEFT:
+            screen.setCx(--cx);
+            break;
+        case ARROW_RIGHT:
+            screen.setCx(++cx);
+            break;
     }
 }
 void Editor::startMainLoop() {
@@ -108,3 +167,4 @@ void Editor::startMainLoop() {
     }
     disableRawMode();
 }
+

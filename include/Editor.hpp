@@ -16,6 +16,7 @@ class Editor {
         bool init();
         bool uninit();
         
+        void editorMoveCursor(int key);
         void editorProcessKey();
         void editorRefreshScreen();
         void drawRows();

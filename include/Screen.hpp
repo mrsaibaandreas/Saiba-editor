@@ -18,12 +18,16 @@ class Screen {
         bool getWindowSize();
         bool getCursorPosition();
 
-        char readKeyboardInput(); 
+        int readKeyboardInput(); 
         
         // Getters and setters area
-        std::uint32_t getRows();
-        
-        std::uint32_t getCols();
+        std::int32_t getRows();
+        std::int32_t getCols();
+        std::int32_t getCx();
+        std::int32_t getCy();
+
+        void setCx(std::int32_t cx);
+        void setCy(std::int32_t cy);
         
     private:
         struct termios origTermios;
@@ -32,14 +36,14 @@ class Screen {
        
         std::string writeBuffer;
 
-        std::uint32_t cx;
-        std::uint32_t cy;
-        std::uint32_t rowoff;
-        std::uint32_t coloff;
-        std::uint32_t numrows;
-        std::uint32_t screenrows;
-        std::uint32_t screencols;
-        std::uint32_t dirty;
+        std::int32_t cx;
+        std::int32_t cy;
+        std::int32_t rowoff;
+        std::int32_t coloff;
+        std::int32_t numrows;
+        std::int32_t screenrows;
+        std::int32_t screencols;
+        std::int32_t dirty;
 
         bool rawmode;
 
