@@ -24,8 +24,8 @@ void Screen::init() {
     coloff = 0;
     numrows = 0;
     dirty = 0;
-
 }
+
 // abort process
 void Screen::abortP(const std::string& message) {
 #pragma GCC diagnostic push

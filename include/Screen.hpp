@@ -35,6 +35,7 @@ class Screen {
         void uninit(void);
        
         std::string writeBuffer;
+        std::string line;
 
         std::int32_t cx;
         std::int32_t cy;
